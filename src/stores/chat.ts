@@ -89,34 +89,64 @@ export const useChatStore = defineStore('chat', () => {
       chat.lastMessage = content.slice(0, 80)
       chat.timestamp = Date.now()
     }
-    return msg
+    // Return reactive proxy from the array, not the plain object
+    return messages.value[messages.value.length - 1]
   }
 
   // --- Typing indicator ---
   const isTyping = ref(false)
 
-  // --- Mock response ---
-  function sendMockResponse(chatId: string) {
-    isTyping.value = true
+  // --- Helper ---
+  function tick(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  }
 
-    return new Promise<Message>((resolve) => {
-      const delay = 1500 + Math.random() * 2000
-      setTimeout(() => {
-        const responses = [
-          'Хорошо, давайте разберём этот вопрос подробнее.\n\nНа основе анализа можно выделить несколько ключевых моментов:\n\n1. **Текущая ситуация** — показатели находятся в пределах нормы, но есть потенциал для оптимизации.\n\n2. **Рекомендации** — предлагаю внедрить поэтапный подход с контрольными точками каждые две недели.\n\n3. **Риски** — основной риск связан с временными затратами на начальном этапе.',
-          'Отличный вопрос! Вот что мне удалось выяснить:\n\nПроанализировав доступные данные, могу отметить положительную динамику по всем ключевым метрикам. Особенно выделяется рост эффективности на 15% после внедрения предложенных изменений.\n\nЕсли потребуется более детальный разбор — уточните, какой аспект интересует в первую очередь.',
-          'Спасибо за запрос. Подготовил краткую сводку:\n\n- **Проблема:** описана достаточно чётко, вижу несколько путей решения\n- **Решение:** оптимальным вариантом будет комбинированный подход\n- **Сроки:** ориентировочно 2-3 недели на реализацию\n\nГотов предоставить пошаговый план, если нужно.',
-          'Давайте посмотрим на ситуацию системно.\n\nС одной стороны, текущие процессы отлажены и работают стабильно. С другой — есть возможности для улучшения, которые могут дать существенный прирост эффективности.\n\nМой совет: начать с малого, протестировать гипотезы на ограниченном участке, и только потом масштабировать.',
-        ]
-        const content = responses[Math.floor(Math.random() * responses.length)]
-        const msg = addMessage(chatId, 'assistant', content, [
-          { id: 's1', title: 'Внутренняя документация', url: '#', snippet: 'Актуальные регламенты и процедуры...' },
-          { id: 's2', title: 'Аналитическая справка', url: '#', snippet: 'Сводные данные за последний период...' },
-        ])
-        isTyping.value = false
-        resolve(msg)
-      }, delay)
-    })
+  // --- Mock response with streaming ---
+  async function sendMockResponse(chatId: string): Promise<Message> {
+    const responses = [
+      'Хорошо, давайте разберём этот вопрос подробнее.\n\nНа основе анализа можно выделить несколько ключевых моментов:\n\n1. **Текущая ситуация** — показатели находятся в пределах нормы, но есть потенциал для оптимизации.\n\n2. **Рекомендации** — предлагаю внедрить поэтапный подход с контрольными точками каждые две недели.\n\n3. **Риски** — основной риск связан с временными затратами на начальном этапе.',
+      'Отличный вопрос! Вот что мне удалось выяснить:\n\nПроанализировав доступные данные, могу отметить положительную динамику по всем ключевым метрикам. Особенно выделяется рост эффективности на 15% после внедрения предложенных изменений.\n\nЕсли потребуется более детальный разбор — уточните, какой аспект интересует в первую очередь.',
+      'Спасибо за запрос. Подготовил краткую сводку:\n\n- **Проблема:** описана достаточно чётко, вижу несколько путей решения\n- **Решение:** оптимальным вариантом будет комбинированный подход\n- **Сроки:** ориентировочно 2-3 недели на реализацию\n\nГотов предоставить пошаговый план, если нужно.',
+      'Давайте посмотрим на ситуацию системно.\n\nС одной стороны, текущие процессы отлажены и работают стабильно. С другой — есть возможности для улучшения, которые могут дать существенный прирост эффективности.\n\nМой совет: начать с малого, протестировать гипотезы на ограниченном участке, и только потом масштабировать.',
+    ]
+    const content = responses[Math.floor(Math.random() * responses.length)]
+
+    // Initial delay — show typing dots
+    isTyping.value = true
+    await tick(600 + Math.random() * 900)
+
+    // Create empty message and hide typing dots
+    const msg = addMessage(chatId, 'assistant', '', [
+      { id: 's1', title: 'Внутренняя документация', url: '#', snippet: 'Актуальные регламенты и процедуры...' },
+      { id: 's2', title: 'Аналитическая справка', url: '#', snippet: 'Сводные данные за последний период...' },
+    ])
+    isTyping.value = false
+
+    // Stream content character by character
+    let i = 0
+    while (i < content.length) {
+      const chunkSize = Math.floor(Math.random() * 5) + 1 // 1–5 chars
+      const chunk = content.slice(i, i + chunkSize)
+      i += chunkSize
+      msg.content += chunk
+
+      // Variable delay based on punctuation
+      const last = chunk[chunk.length - 1]
+      let pause = 15 + Math.random() * 30
+      if (last === '.' || last === '!' || last === '?') pause += 70
+      else if (last === ',') pause += 35
+      else if (last === '\n') pause += 50
+
+      await tick(pause)
+    }
+
+    // Update lastMessage in chat sidebar after streaming completes
+    const chat = chats.value.find((c) => c.id === chatId)
+    if (chat) {
+      chat.lastMessage = content.slice(0, 80)
+    }
+
+    return msg
   }
 
   return {

@@ -31,8 +31,8 @@ function goToChat(id: string) {
 }
 
 function newChat() {
-  const id = chatStore.createChat()
-  router.push(`/chat/${id}`)
+  chatStore.currentChatId = null
+  router.push('/')
 }
 
 function toggleCollapse() {

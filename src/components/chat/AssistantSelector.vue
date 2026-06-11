@@ -46,10 +46,6 @@ function select(option: AssistantOption) {
   close()
 }
 
-function clearSelection() {
-  emit('update:modelValue', null)
-}
-
 function close() {
   isOpen.value = false
 }
@@ -177,15 +173,6 @@ onUnmounted(() => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </div>
-      <button
-        type="button"
-        class="w-10 h-10 flex items-center justify-center rounded-xl text-text-tertiary hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer shrink-0 bg-white"
-        @click.stop="clearSelection"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      </button>
     </div>
 
     <!-- Teleported dropdown -->

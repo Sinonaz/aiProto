@@ -54,9 +54,17 @@ function openSourceDetail(sourceId: string) {
   }
 }
 
-// Auto-scroll to bottom when new messages or typing
+// Auto-scroll when new messages, typing, or streaming content
 watch(
-  () => [chatStore.currentMessages.length, chatStore.isTyping],
+  () => {
+    const msgs = chatStore.currentMessages
+    const last = msgs.length > 0 ? msgs[msgs.length - 1] : null
+    return [
+      msgs.length,
+      chatStore.isTyping,
+      last?.content.length ?? 0, // track streaming
+    ]
+  },
   () => {
     nextTick(() => {
       if (messagesContainer.value) {
