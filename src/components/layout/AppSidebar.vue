@@ -43,6 +43,10 @@ function goHome() {
   chatStore.currentChatId = null
   router.push('/')
 }
+
+function goToProfile() {
+  router.push('/profile')
+}
 </script>
 
 <template>
@@ -165,7 +169,10 @@ function goHome() {
 
     <!-- Footer user -->
     <div v-if="!collapsed" class="px-4 pb-4">
-      <div class="flex items-center gap-3 px-2 py-2">
+      <div
+        class="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-sidebar-hover transition-colors cursor-pointer"
+        @click="goToProfile"
+      >
         <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand text-sm font-semibold">
           I
         </div>
